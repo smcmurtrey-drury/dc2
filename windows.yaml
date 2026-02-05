@@ -1,0 +1,98 @@
+# ==============================================================================
+# Splunk Universal Forwarder - Install & Configure (Ansible Edition)
+# Matches the logic of the "Fixed" PowerShell script
+# ==============================================================================
+
+- name: Deploy Splunk Universal Forwarder
+  hosts: windows_servers # Change to your target group
+  vars:
+    splunk_msi_url: "https://download.splunk.com/products/universalforwarder/releases/10.0.3/windows/splunkforwarder-10.0.3-adbac1c8811c-windows-x64.msi"
+    splunk_indexer_ip: "172.20.242.20"
+    splunk_indexer_port: "9997"
+    splunk_admin_user: "admin"
+    splunk_admin_pass: "YourSecurePassword123!" # Ideally, use Ansible Vault for this
+    splunk_home: "C:\\Program Files\\SplunkUniversalForwarder"
+
+  tasks:
+    # --------------------------------------------------------------------------
+    # STEP 1: Install the MSI (Standard Ansible Method)
+    # --------------------------------------------------------------------------
+    - name: Install Splunk Universal Forwarder
+      ansible.windows.win_package:
+        path: "{{ splunk_msi_url }}"
+        product_id: "adbac1c8811c" # Helps Ansible know if it's already installed
+        arguments:
+          - AGREETOLICENSE=Yes
+          - RECEIVING_INDEXER="{{ splunk_indexer_ip }}:{{ splunk_indexer_port }}"
+          - LAUNCHSPLUNK=1
+          - SPLUNKPASSWORD="{{ splunk_admin_pass }}"
+          - SPLUNKUSERNAME="{{ splunk_admin_user }}"
+          - /quiet
+      register: splunk_install
+
+    # --------------------------------------------------------------------------
+    # STEP 2: Configure Inputs & Patch Login (Matches your Screenshot Style)
+    # --------------------------------------------------------------------------
+    - name: Configure inputs.conf and Patch server.conf
+      ansible.windows.win_powershell:
+        script: |
+          [CmdletBinding()]
+          param (
+              [String]$SplunkHome
+          )
+
+          $ErrorActionPreference = "Stop"
+          $Ansible.Changed = $false
+          
+          # --- Paths ---
+          $inputsPath = "$SplunkHome\etc\system\local\inputs.conf"
+          $serverPath = "$SplunkHome\etc\system\local\server.conf"
+
+          # --- 1. Fix inputs.conf (Enable Windows Logs) ---
+          $desiredInputs = @"
+          [default]
+          host = $env:COMPUTERNAME
+
+          [WinEventLog://Application]
+          disabled = 0
+          index = main
+
+          [WinEventLog://Security]
+          disabled = 0
+          index = main
+
+          [WinEventLog://System]
+          disabled = 0
+          index = main
+          "@
+
+          # Check if file exists and has correct content
+          if (-not (Test-Path $inputsPath) -or ((Get-Content $inputsPath -Raw).Trim() -ne $desiredInputs.Trim())) {
+              Set-Content -Path $inputsPath -Value $desiredInputs -Force
+              Write-Verbose "Updated inputs.conf"
+              $Ansible.Changed = $true
+          }
+
+          # --- 2. Fix server.conf (Allow Remote Login) ---
+          if (Test-Path $serverPath) {
+              $serverContent = Get-Content $serverPath -Raw
+              if ($serverContent -notmatch "allowRemoteLogin = always") {
+                  Add-Content -Path $serverPath -Value "`r`n[general]`r`nallowRemoteLogin = always"
+                  Write-Verbose "Patched server.conf"
+                  $Ansible.Changed = $true
+              }
+          }
+
+          # --- 3. Restart if Config Changed ---
+          if ($Ansible.Changed) {
+              Restart-Service -Name SplunkForwarder -Force
+          }
+        parameters:
+          SplunkHome: "{{ splunk_home }}"
+      
+      # Just like your screenshot, use runas for permissions
+      vars:
+        ansible_become: yes
+        ansible_become_method: runas
+        ansible_become_user: "{{ ansible_user }}"
+        ansible_become_password: "{{ ansible_password }}"
