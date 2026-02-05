@@ -1,0 +1,73 @@
+---
+- name: Harden VyOS, Fix Standard NAT, and Enable Splunk Logging
+  hosts: routers
+  gather_facts: no
+  vars:
+    splunk_ip: "172.20.242.20"
+
+  tasks:
+
+    - name: 1. Configure OUTSIDE-IN Firewall (Hardened)
+      vyos.vyos.vyos_config:
+        lines:
+          # --- Definitions ---
+          - set firewall group port-group BAD_PORTS port 22
+          - set firewall group port-group BAD_PORTS port 23
+          - set firewall group port-group BAD_PORTS port 3389
+          - set firewall group port-group BAD_PORTS port 5900
+          
+          # --- Rule 5: Allow Scoring Engine (Golden Ticket) ---
+          - set firewall ipv4 name OUTSIDE-IN rule 5 action accept
+          - set firewall ipv4 name OUTSIDE-IN rule 5 source group network-group SCORING_IPS
+
+          # --- Rule 6: Block Management Ports for Everyone Else ---
+          - set firewall ipv4 name OUTSIDE-IN rule 6 action drop
+          - set firewall ipv4 name OUTSIDE-IN rule 6 destination group port-group BAD_PORTS
+          - set firewall ipv4 name OUTSIDE-IN rule 6 protocol tcp
+          - set firewall ipv4 name OUTSIDE-IN rule 6 description "Block Mgmt Ports"
+
+          # --- Public Services (Allow Standard Traffic) ---
+          - set firewall ipv4 name OUTSIDE-IN rule 20 action accept
+          - set firewall ipv4 name OUTSIDE-IN rule 20 destination port 80,443
+          - set firewall ipv4 name OUTSIDE-IN rule 20 protocol tcp
+          
+          - set firewall ipv4 name OUTSIDE-IN rule 30 action accept
+          - set firewall ipv4 name OUTSIDE-IN rule 30 destination port 25,110
+          - set firewall ipv4 name OUTSIDE-IN rule 30 protocol tcp
+          
+          - set firewall ipv4 name OUTSIDE-IN rule 40 action accept
+          - set firewall ipv4 name OUTSIDE-IN rule 40 destination port 53
+          - set firewall ipv4 name OUTSIDE-IN rule 40 protocol udp
+
+    - name: 2. Configure INSIDE-OUT Firewall (Strict Outbound)
+      vyos.vyos.vyos_config:
+        lines:
+          # Default Action: DROP (Whitelist Mode)
+          - set firewall ipv4 name INSIDE-OUT default-action drop
+          
+          # Standard Allow Rules
+          - set firewall ipv4 name INSIDE-OUT rule 10 action accept
+          - set firewall ipv4 name INSIDE-OUT rule 10 state established enable
+          - set firewall ipv4 name INSIDE-OUT rule 10 state related enable
+          
+          - set firewall ipv4 name INSIDE-OUT rule 20 action accept
+          - set firewall ipv4 name INSIDE-OUT rule 20 destination port 53
+          - set firewall ipv4 name INSIDE-OUT rule 20 protocol udp
+          
+          - set firewall ipv4 name INSIDE-OUT rule 30 action accept
+          - set firewall ipv4 name INSIDE-OUT rule 30 destination port 80,443
+          - set firewall ipv4 name INSIDE-OUT rule 30 protocol tcp
+          
+          - set firewall ipv4 name INSIDE-OUT rule 50 action accept
+          - set firewall ipv4 name INSIDE-OUT rule 50 protocol icmp
+
+    - name: 3. Configure Logging to Splunk
+      vyos.vyos.vyos_config:
+        lines:
+          # Using 'remote' keyword based on your screenshot
+          - set system syslog remote {{ 172.20.242.20 }} facility all level info
+          - set system syslog remote {{ 172.20.242.20 }} port 514
+
+    - name: 4. Save Configuration
+      vyos.vyos.vyos_config:
+        save: yes
