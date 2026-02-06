@@ -28,9 +28,6 @@ New-NetFirewallRule -DisplayName "101-ALLOW-AD-UDP-Subnet" -Direction Inbound -L
 # 3. ALLOW Linux Mail Server Auth (Specific IP Only)
 New-NetFirewallRule -DisplayName "102-ALLOW-LinuxMail-Auth" -Direction Inbound -LocalPort 88,389,636 -Protocol TCP -RemoteAddress $LinuxMailIP -Action Allow
 
-# 4. ALLOW ICMP (Ping) - Optional but recommended for troubleshooting
-New-NetFirewallRule -DisplayName "999-ALLOW-Ping" -Direction Inbound -Protocol ICMPv4 -Action Allow
-
 # ---------------------------------------------------------------------
 # PHASE 3: DEFAULT BLOCK
 # ---------------------------------------------------------------------
