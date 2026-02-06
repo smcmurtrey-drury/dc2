@@ -1,0 +1,24 @@
+$LinuxMailIP   = "172.20.242.40"  # Linux Mail Server
+$NetworkSubnet = "172.20.240.0/24"
+
+Write-Host "Securing AD/DNS SERVER..." -ForegroundColor Cyan
+
+# 1. Reset/Enable Firewall Profiles
+Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
+
+# 2. ALLOW AD Services (TCP) from the Subnet
+# Includes: DNS(53), Kerberos(88), RPC(135), LDAP(389), SMB(445), LDAPS(636), GlobalCatalog(3268/9)
+$AD_TCP = @(53, 88, 135, 389, 445, 464, 636, 3268, 3269)
+New-NetFirewallRule -DisplayName "100-ALLOW-AD-TCP-Subnet" -Direction Inbound -LocalPort $AD_TCP -Protocol TCP -RemoteAddress $NetworkSubnet -Action Allow
+
+# 5. ALLOW AD Services (UDP) from the Subnet
+$AD_UDP = @(53, 88, 389, 464)
+New-NetFirewallRule -DisplayName "101-ALLOW-AD-UDP-Subnet" -Direction Inbound -LocalPort $AD_UDP -Protocol UDP -RemoteAddress $NetworkSubnet -Action Allow
+
+# 6. ALLOW Linux Mail Server Auth (Specific IP Only)
+New-NetFirewallRule -DisplayName "102-ALLOW-LinuxMail-Auth" -Direction Inbound -LocalPort 88,389,636 -Protocol TCP -RemoteAddress $LinuxMailIP -Action Allow
+
+# 7. BLOCK All Other Inbound Traffic
+Set-NetFirewallProfile -Profile Domain,Public,Private -DefaultInboundAction Block
+
+Write-Host "DONE: AD/DNS Server is hardened." -ForegroundColor Green
