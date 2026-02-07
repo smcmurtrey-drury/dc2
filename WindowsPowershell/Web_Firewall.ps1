@@ -3,22 +3,23 @@ $DC_IP = "172.20.240.102"
 
 Write-Host "Securing WEB SERVER..." -ForegroundColor Cyan
 
-# --- PHASE 1: THE NUKE ---
-Write-Host "Disabling all existing rules..." -ForegroundColor Yellow
-Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
-Get-NetFirewallRule | Disable-NetFirewallRule
+# 1. Safe Nuke
+Write-Host "Scrubbing existing rules..." -ForegroundColor Yellow
+$SystemGroups = @("*Core Networking*", "*Windows Management Instrumentation*", "*Windows Defender Firewall Remote Management*")
+Get-NetFirewallRule | Where-Object { $_.Enabled -eq "True" } | ForEach-Object {
+    $Rule = $_
+    $IsSystem = $false
+    foreach ($Group in $SystemGroups) { if ($Rule.DisplayGroup -like $Group) { $IsSystem = $true; break } }
+    if (-not $IsSystem) { Disable-NetFirewallRule -Name $Rule.Name -ErrorAction SilentlyContinue }
+}
 
-# --- PHASE 1.5: THE GUI FIX ---
-Enable-NetFirewallRule -DisplayGroup "Core Networking"
+# 2. Secure Management (Lock to DC)
+Set-NetFirewallRule -DisplayGroup "*Windows Management Instrumentation*" -RemoteAddress $DC_IP -ErrorAction SilentlyContinue
+Set-NetFirewallRule -DisplayGroup "*Windows Defender Firewall Remote Management*" -RemoteAddress $DC_IP -ErrorAction SilentlyContinue
 
-# --- PHASE 2: PERMIT TRAFFIC ---
-
-# 1. ALLOW Web Services - FROM ANY
+# 3. Competition Rules
 New-NetFirewallRule -DisplayName "200-ALLOW-Web-Services-Any" -Direction Inbound -LocalPort 80,443 -Protocol TCP -Action Allow
 
-# 2. ALLOW Domain Controller Management
-New-NetFirewallRule -DisplayName "001-ALLOW-DC-Communication" -Direction Inbound -RemoteAddress $DC_IP -Action Allow
-
-# --- PHASE 3: LOCKDOWN ---
+# 4. Lockdown
 Set-NetFirewallProfile -Profile Domain,Public,Private -DefaultInboundAction Block
-Write-Host "Web Server Hardened & GUI Restored." -ForegroundColor Green
+Write-Host "Web Server Secured." -ForegroundColor Green
