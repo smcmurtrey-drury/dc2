@@ -31,6 +31,9 @@ New-NetFirewallRule -DisplayName "100-ALLOW-AD-TCP-Subnet" -Direction Inbound -L
 $AD_UDP = @(88, 389, 464)
 New-NetFirewallRule -DisplayName "101-ALLOW-AD-UDP-Subnet" -Direction Inbound -LocalPort $AD_UDP -Protocol UDP -RemoteAddress $NetworkSubnet -Action Allow
 
+# --- [NEW] RPC Dynamic Ports (Fixes "Applying User Settings" Freeze) ---
+New-NetFirewallRule -DisplayName "103-ALLOW-RPC-HighPorts-Subnet" -Direction Inbound -LocalPort 49152-65535 -Protocol TCP -RemoteAddress $NetworkSubnet -Action Allow
+
 # Mail Auth (Specific IP)
 New-NetFirewallRule -DisplayName "102-ALLOW-LinuxMail-Auth" -Direction Inbound -LocalPort 88,389,636 -Protocol TCP -RemoteAddress $LinuxMailIP -Action Allow
 
