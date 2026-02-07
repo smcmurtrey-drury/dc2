@@ -37,9 +37,6 @@ Write-Host "Applying Security Rules..." -ForegroundColor Yellow
 # Allow DC Communication (Critical for Login/GPO)
 New-NetFirewallRule -DisplayName "001-ALLOW-DC-Communication" -Direction Inbound -RemoteAddress $DC_IP -Action Allow -ErrorAction SilentlyContinue
 
-# Allow Ping (Optional, but good for scoring checks)
-New-NetFirewallRule -DisplayName "999-ALLOW-Ping-Any" -Direction Inbound -Protocol ICMPv4 -Action Allow -ErrorAction SilentlyContinue
-
 # 4. LOCKDOWN
 Write-Host "Locking down..." -ForegroundColor Yellow
 Set-NetFirewallProfile -Profile Domain,Public,Private -DefaultInboundAction Block
