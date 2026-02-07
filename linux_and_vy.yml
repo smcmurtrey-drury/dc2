@@ -1,0 +1,176 @@
+---
+# ==============================================================================
+# PLAY 1: LINUX HARDENING (Ubuntu, Fedora, Oracle)
+# ==============================================================================
+- name: Global Linux Hardening & Service Specific Configs
+  hosts: linux_hosts
+  become: yes
+  vars:
+    # Global User Config
+    admin_user: "Charizard"
+    admin_pass: "changeme"
+    
+    # OpenCart Specifics
+    opencart_root: "/var/www/opencart"
+
+  tasks:
+    # --- 1. IDENTITY: Create 'Charizard' User ---
+    - name: Create 'Charizard' Admin User
+      ansible.builtin.user:
+        name: "{{ admin_user }}"
+        password: "{{ admin_pass | password_hash('sha512') }}"
+        shell: /bin/bash
+        groups: "{{ 'wheel' if ansible_os_family == 'RedHat' else 'sudo' }}"
+        append: yes
+        state: present
+
+    # --- 2. GLOBAL SSH HARDENING ---
+    - name: Secure SSH (Disable Root, Enforce Protocol)
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication yes' }
+      notify: Restart SSH
+
+    # --- 3. UBUNTU SPECIFIC (OpenCart + MySQL) ---
+    - name: Ubuntu/OpenCart Hardening Block
+      block:
+        - name: Secure MySQL (Remove Anonymous/Test)
+          community.mysql.mysql_user:
+            name: ""
+            state: absent
+            login_unix_socket: /var/run/mysqld/mysqld.sock
+          ignore_errors: yes # Continues if DB isn't running yet
+
+        - name: Hardening OpenCart Filesystem (Permissions)
+          file:
+            path: "{{ item }}"
+            mode: '0444'
+          loop:
+            - "{{ opencart_root }}/config.php"
+            - "{{ opencart_root }}/admin/config.php"
+          ignore_errors: yes
+
+        - name: Ubuntu Firewall (UFW) - Allow Web/DB
+          community.general.ufw:
+            rule: allow
+            port: "{{ item }}"
+            proto: tcp
+          loop: ['80', '443', '3306']
+          
+        - name: Enable UFW
+          community.general.ufw:
+            state: enabled
+            policy: deny
+      when: "'ecomm' in group_names"
+
+    # --- 4. FEDORA SPECIFIC (Mail Server) ---
+    - name: Fedora/Mail Hardening Block
+      block:
+        - name: Ensure Firewalld is running
+          service:
+            name: firewalld
+            state: started
+            enabled: yes
+
+        - name: Open Mail Ports (SMTP, IMAP, POP3)
+          ansible.posix.firewalld:
+            port: "{{ item }}"
+            permanent: yes
+            state: enabled
+          loop:
+            - 25/tcp   # SMTP
+            - 587/tcp  # Submission
+            - 143/tcp  # IMAP
+            - 993/tcp  # IMAPS
+            - 110/tcp  # POP3
+            - 995/tcp  # POP3S
+            - 88/tcp   # Kerberos
+            - 88/udp   # Kerberos
+          notify: Reload Firewalld
+      when: "'mail' in group_names"
+
+    # --- 5. ORACLE SPECIFIC (Splunk) ---
+    - name: Oracle/Splunk Hardening Block
+      block:
+        - name: Ensure Firewalld is running
+          service:
+            name: firewalld
+            state: started
+            enabled: yes
+
+        - name: Open Splunk Ports
+          ansible.posix.firewalld:
+            port: "{{ item }}"
+            permanent: yes
+            state: enabled
+          loop:
+            - 8000/tcp # Splunk Web
+            - 9997/tcp # Splunk Forwarding
+            - 8089/tcp # Splunk Mgmt
+          notify: Reload Firewalld
+      when: "'splunk' in group_names"
+
+  handlers:
+    - name: Restart SSH
+      service:
+        name: "{{ 'ssh' if ansible_os_family == 'Debian' else 'sshd' }}"
+        state: restarted
+    - name: Reload Firewalld
+      command: firewall-cmd --reload
+
+# ==============================================================================
+# PLAY 2: VYOS ROUTER HARDENING (VyOS 1.4.3 Sagitta)
+# ==============================================================================
+- name: Harden VyOS Router
+  hosts: vyos
+  gather_facts: no
+  vars:
+    splunk_ip: "172.20.242.20"
+    admin_user: "Charizard"
+    admin_pass: "changeme"
+
+  tasks:
+    - name: Create 'Charizard' Admin on VyOS (Role Admin)
+      vyos.vyos.vyos_config:
+        lines:
+          - set system login user {{ admin_user }} full-name "Charizard Admin"
+          - set system login user {{ admin_user }} authentication plaintext-password "{{ admin_pass }}"
+          - set system login user {{ admin_user }} role admin
+
+    - name: Configure Logging to Splunk (Fixed Syntax)
+      vyos.vyos.vyos_config:
+        lines:
+          - set system syslog host {{ splunk_ip }} facility all level info
+          - set system syslog host {{ splunk_ip }} port 514
+
+    - name: Apply Firewall Rules (Fixed 'Enable' Syntax)
+      vyos.vyos.vyos_config:
+        lines:
+          # --- OUTSIDE-IN ---
+          - set firewall group port-group BAD_PORTS port 22
+          - set firewall group port-group BAD_PORTS port 23
+          - set firewall ipv4 name OUTSIDE-IN rule 6 action drop
+          - set firewall ipv4 name OUTSIDE-IN rule 6 destination group port-group BAD_PORTS
+          - set firewall ipv4 name OUTSIDE-IN rule 6 protocol tcp
+          
+          # --- INSIDE-OUT (Strict) ---
+          - set firewall ipv4 name INSIDE-OUT default-action drop
+          - set firewall ipv4 name INSIDE-OUT rule 10 action accept
+          - set firewall ipv4 name INSIDE-OUT rule 10 state established
+          - set firewall ipv4 name INSIDE-OUT rule 10 state related
+          
+          # --- DNS/Web/Mail Outbound ---
+          - set firewall ipv4 name INSIDE-OUT rule 20 action accept
+          - set firewall ipv4 name INSIDE-OUT rule 20 destination port 53
+          - set firewall ipv4 name INSIDE-OUT rule 20 protocol udp
+          - set firewall ipv4 name INSIDE-OUT rule 30 action accept
+          - set firewall ipv4 name INSIDE-OUT rule 30 destination port 80,443
+          - set firewall ipv4 name INSIDE-OUT rule 30 protocol tcp
+
+    - name: Save Configuration
+      vyos.vyos.vyos_config:
+        save: yes
