@@ -58,66 +58,66 @@ set nat destination rule 45 translation address '172.20.240.101'
 set nat destination rule 45 protocol tcp
 set nat destination rule 45 destination port 443
 
-set firewall ipv4 name OUTSIDE-IN default-action drop
-set firewall ipv4 name OUTSIDE-IN default-log enable
+set firewall name ipv4 OUTSIDE-IN default-action drop
+set firewall name ipv4 OUTSIDE-IN default-log enable
 
-set firewall ipv4 name OUTSIDE-IN rule 1 action accept
-set firewall ipv4 name OUTSIDE-IN rule 1 state established enable
-set firewall ipv4 name OUTSIDE-IN rule 1 state related enable
+set firewall name ipv4  OUTSIDE-IN rule 1 action accept
+set firewall name ipv4 OUTSIDE-IN rule 1 state established enable
+set firewall name ipv4 OUTSIDE-IN rule 1 state related enable
 
-set firewall ipv4 name OUTSIDE-IN rule 20 action accept
-set firewall ipv4 name OUTSIDE-IN rule 20 destination port 80
-set firewall ipv4 name OUTSIDE-IN rule 20 protocol tcp
+set firewall name ipv4 OUTSIDE-IN rule 20 action accept
+set firewall name ipv4 OUTSIDE-IN rule 20 destination port 80
+set firewall name ipv4 OUTSIDE-IN rule 20 protocol tcp
 
-set firewall ipv4 name OUTSIDE-IN rule 21 action accept
-set firewall ipv4 name OUTSIDE-IN rule 21 destination port 443
-set firewall ipv4 name OUTSIDE-IN rule 21 protocol tcp
+set firewall name ipv4 OUTSIDE-IN rule 21 action accept
+set firewall name ipv4 OUTSIDE-IN rule 21 destination port 443
+set firewall name ipv4 OUTSIDE-IN rule 21 protocol tcp
 
-set firewall ipv4 name OUTSIDE-IN rule 30 action accept
-set firewall ipv4 name OUTSIDE-IN rule 30 destination port 25
-set firewall ipv4 name OUTSIDE-IN rule 30 protocol tcp
+set firewall name ipv4 OUTSIDE-IN rule 30 action accept
+set firewall name ipv4 OUTSIDE-IN rule 30 destination port 25
+set firewall name ipv4 OUTSIDE-IN rule 30 protocol tcp
 
-set firewall ipv4 name OUTSIDE-IN rule 31 action accept
-set firewall ipv4 name OUTSIDE-IN rule 31 destination port 110
-set firewall ipv4 name OUTSIDE-IN rule 31 protocol tcp
+set firewall name ipv4 OUTSIDE-IN rule 31 action accept
+set firewall name ipv4 OUTSIDE-IN rule 31 destination port 110
+set firewall name ipv4 OUTSIDE-IN rule 31 protocol tcp
 
-set firewall ipv4 name OUTSIDE-IN rule 40 action accept
-set firewall ipv4 name OUTSIDE-IN rule 40 destination port 53
-set firewall ipv4 name OUTSIDE-IN rule 40 protocol udp
+set firewall name ipv4 OUTSIDE-IN rule 40 action accept
+set firewall name ipv4 OUTSIDE-IN rule 40 destination port 53
+set firewall name ipv4 OUTSIDE-IN rule 40 protocol udp
 
-set firewall ipv4 name OUTSIDE-IN rule 41 action accept
-set firewall ipv4 name OUTSIDE-IN rule 41 destination port 53
-set firewall ipv4 name OUTSIDE-IN rule 41 protocol tcp
+set firewall name ipv4 OUTSIDE-IN rule 41 action accept
+set firewall name ipv4 OUTSIDE-IN rule 41 destination port 53
+set firewall name ipv4 OUTSIDE-IN rule 41 protocol tcp
 
-set firewall ipv4 name OUTSIDE-IN rule 50 action accept
-set firewall ipv4 name OUTSIDE-IN rule 50 protocol icmp
+set firewall name ipv4 OUTSIDE-IN rule 50 action accept
+set firewall name ipv4 OUTSIDE-IN rule 50 protocol icmp
 
-set firewall ipv4 name INSIDE-OUT default-action drop
-set firewall ipv4 name INSIDE-OUT default-log enable
+set firewall name ipv4 INSIDE-OUT default-action drop
+set firewall name ipv4 INSIDE-OUT default-log enable
 
-set firewall ipv4 name INSIDE-OUT rule 10 action accept
-set firewall ipv4 name INSIDE-OUT rule 10 state established enable
-set firewall ipv4 name INSIDE-OUT rule 10 state related enable
+set firewall name ipv4 INSIDE-OUT rule 10 action accept
+set firewall name ipv4 INSIDE-OUT rule 10 state established enable
+set firewall name ipv4 INSIDE-OUT rule 10 state related enable
 
-set firewall ipv4 name INSIDE-OUT rule 20 action accept
-set firewall ipv4 name INSIDE-OUT rule 20 destination port 80,443
-set firewall ipv4 name INSIDE-OUT rule 20 protocol tcp
+set firewall name ipv4 INSIDE-OUT rule 20 action accept
+set firewall name ipv4 INSIDE-OUT rule 20 destination port 80,443
+set firewall name ipv4 INSIDE-OUT rule 20 protocol tcp
 
-set firewall ipv4 name INSIDE-OUT rule 21 action accept
-set firewall ipv4 name INSIDE-OUT rule 21 destination port 443
-set firewall ipv4 name INSIDE-OUT rule 21 protocol tcp
+set firewall name ipv4 INSIDE-OUT rule 21 action accept
+set firewall name ipv4 INSIDE-OUT rule 21 destination port 443
+set firewall name ipv4 INSIDE-OUT rule 21 protocol tcp
 
-set firewall ipv4 name INSIDE-OUT rule 30 action accept
-set firewall ipv4 name INSIDE-OUT rule 30 destination port 53
-set firewall ipv4 name INSIDE-OUT rule 30 protocol udp
+set firewall name ipv4 INSIDE-OUT rule 30 action accept
+set firewall name ipv4 INSIDE-OUT rule 30 destination port 53
+set firewall name ipv4 INSIDE-OUT rule 30 protocol udp
 
 # Strict NTP: Only DC (172.20.240.102) can talk to Google NTP
-set firewall ipv4 name INSIDE-OUT rule 40 description 'Strict NTP for DC'
-set firewall ipv4 name INSIDE-OUT rule 40 action accept
-set firewall ipv4 name INSIDE-OUT rule 40 protocol udp
-set firewall ipv4 name INSIDE-OUT rule 40 destination port 123
-set firewall ipv4 name INSIDE-OUT rule 40 source address '172.20.240.102'
-set firewall ipv4 name INSIDE-OUT rule 40 destination address '216.239.35.0/24'
+set firewall name ipv4 INSIDE-OUT rule 40 description 'Strict NTP for DC'
+set firewall name ipv4 INSIDE-OUT rule 40 action accept
+set firewall name ipv4 INSIDE-OUT rule 40 protocol udp
+set firewall name ipv4 INSIDE-OUT rule 40 destination port 123
+set firewall name ipv4 INSIDE-OUT rule 40 source address '172.20.240.102'
+set firewall name ipv4 INSIDE-OUT rule 40 destination address '216.239.35.0/24'
 
 # Lock down management
 delete service ssh
