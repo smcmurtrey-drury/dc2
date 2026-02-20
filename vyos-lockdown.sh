@@ -133,44 +133,26 @@ set firewall ipv4 name INSIDE-OUT rule 40 destination address '216.239.35.0/24'
 # ATTACH FIREWALLS using jump targets
 # ==========================================
 
-# A. PROTECT THE NETWORK (Traffic passing THROUGH the router)
-# -----------------------------------------------------------
+# 1. DELETE THE BACKWARDS RULES
+delete firewall ipv4 forward filter
+delete firewall ipv4 input filter
 
-# Rule 10: If traffic enters eth4 (WAN 1), jump to OUTSIDE-IN
+# 2. CREATE THE CORRECT FORWARD RULES (Traffic passing through)
+# If traffic enters eth3 (from Internet), apply OUTSIDE-IN
 set firewall ipv4 forward filter rule 10 action jump
 set firewall ipv4 forward filter rule 10 jump-target OUTSIDE-IN
-set firewall ipv4 forward filter rule 10 inbound-interface name eth4
+set firewall ipv4 forward filter rule 10 inbound-interface name eth3
 
-# Rule 11: If traffic enters eth5 (WAN 2), jump to OUTSIDE-IN
-set firewall ipv4 forward filter rule 11 action jump
-set firewall ipv4 forward filter rule 11 jump-target OUTSIDE-IN
-set firewall ipv4 forward filter rule 11 inbound-interface name eth5
-
-# Rule 20: If traffic leaves via eth4 (Egress), jump to INSIDE-OUT
+# If traffic leaves eth3 (to Internet), apply INSIDE-OUT
 set firewall ipv4 forward filter rule 20 action jump
 set firewall ipv4 forward filter rule 20 jump-target INSIDE-OUT
-set firewall ipv4 forward filter rule 20 outbound-interface name eth4
+set firewall ipv4 forward filter rule 20 outbound-interface name eth3
 
-# Rule 21: If traffic leaves via eth5 (Egress), jump to INSIDE-OUT
-set firewall ipv4 forward filter rule 21 action jump
-set firewall ipv4 forward filter rule 21 jump-target INSIDE-OUT
-set firewall ipv4 forward filter rule 21 outbound-interface name eth5
-
-
-# B. PROTECT THE ROUTER ITSELF (Traffic TO the router)
-# ----------------------------------------------------
-# This prevents Red Team from hitting the router's own SSH/Management ports
-# even if they are open.
-
-# Rule 10: If traffic hits the router from eth4, check OUTSIDE-IN
+# 3. CREATE THE CORRECT INPUT RULES (Traffic directly to router)
+# Protect the router itself from external SSH/attacks
 set firewall ipv4 input filter rule 10 action jump
 set firewall ipv4 input filter rule 10 jump-target OUTSIDE-IN
-set firewall ipv4 input filter rule 10 inbound-interface name eth4
-
-# Rule 11: If traffic hits the router from eth5, check OUTSIDE-IN
-set firewall ipv4 input filter rule 11 action jump
-set firewall ipv4 input filter rule 11 jump-target OUTSIDE-IN
-set firewall ipv4 input filter rule 11 inbound-interface name eth5
+set firewall ipv4 input filter rule 10 inbound-interface name eth3
 
 # ==========================================
 # LOCK DOWN MANAGEMENT
