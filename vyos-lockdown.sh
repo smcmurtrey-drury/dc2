@@ -59,11 +59,11 @@ set nat destination rule 45 protocol tcp
 set nat destination rule 45 destination port 443
 
 set firewall name ipv4 OUTSIDE-IN default-action drop
-set firewall name ipv4 OUTSIDE-IN default-log enable
+set firewall name ipv4 OUTSIDE-IN default-log
 
 set firewall name ipv4  OUTSIDE-IN rule 1 action accept
-set firewall name ipv4 OUTSIDE-IN rule 1 state established enable
-set firewall name ipv4 OUTSIDE-IN rule 1 state related enable
+set firewall name ipv4 OUTSIDE-IN rule 1 state established
+set firewall name ipv4 OUTSIDE-IN rule 1 state related
 
 set firewall name ipv4 OUTSIDE-IN rule 20 action accept
 set firewall name ipv4 OUTSIDE-IN rule 20 destination port 80
@@ -93,14 +93,14 @@ set firewall name ipv4 OUTSIDE-IN rule 50 action accept
 set firewall name ipv4 OUTSIDE-IN rule 50 protocol icmp
 
 set firewall name ipv4 INSIDE-OUT default-action drop
-set firewall name ipv4 INSIDE-OUT default-log enable
+set firewall name ipv4 INSIDE-OUT default-log
 
 set firewall name ipv4 INSIDE-OUT rule 10 action accept
-set firewall name ipv4 INSIDE-OUT rule 10 state established enable
-set firewall name ipv4 INSIDE-OUT rule 10 state related enable
+set firewall name ipv4 INSIDE-OUT rule 10 state established 
+set firewall name ipv4 INSIDE-OUT rule 10 state related 
 
 set firewall name ipv4 INSIDE-OUT rule 20 action accept
-set firewall name ipv4 INSIDE-OUT rule 20 destination port 80,443
+set firewall name ipv4 INSIDE-OUT rule 20 destination port 80
 set firewall name ipv4 INSIDE-OUT rule 20 protocol tcp
 
 set firewall name ipv4 INSIDE-OUT rule 21 action accept
