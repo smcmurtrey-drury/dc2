@@ -18,7 +18,7 @@ set nat source rule 101 translation address masquerade
 # ==========================================
 # Rule 10: Splunk Web (TCP 8000)
 set nat destination rule 10 description 'Scored: Splunk Web UI'
-set nat destination rule 10 inbound-interface eth4
+set nat destination rule 10 inbound-interface eth3
 set nat destination rule 10 destination address '10.229.100.11'
 set nat destination rule 10 translation address '172.20.242.40'
 set nat destination rule 10 protocol tcp
@@ -26,7 +26,7 @@ set nat destination rule 10 destination port 8000
 
 # Rule 20: DNS (UDP 53)
 set nat destination rule 20 description 'Scored: DNS'
-set nat destination rule 20 inbound-interface eth4
+set nat destination rule 20 inbound-interface eth3
 set nat destination rule 20 destination address '10.229.100.11'
 set nat destination rule 20 translation address '172.20.242.30'
 set nat destination rule 20 protocol udp
@@ -34,7 +34,7 @@ set nat destination rule 20 destination port 53
 
 # Rule 21: Ecomm HTTP (TCP 80)
 set nat destination rule 21 description 'Scored: Ecomm-Web'
-set nat destination rule 21 inbound-interface eth4
+set nat destination rule 21 inbound-interface eth3
 set nat destination rule 21 destination address '10.229.100.11'
 set nat destination rule 21 translation address '172.20.242.30'
 set nat destination rule 21 protocol tcp
@@ -42,7 +42,7 @@ set nat destination rule 21 destination port 80
 
 # Rule 30: Mail SMTP (TCP 25)
 set nat destination rule 30 description 'Scored: SMTP'
-set nat destination rule 30 inbound-interface eth4
+set nat destination rule 30 inbound-interface eth3
 set nat destination rule 30 destination address '10.229.100.39'
 set nat destination rule 30 translation address '172.20.242.40'
 set nat destination rule 30 protocol tcp
@@ -50,7 +50,7 @@ set nat destination rule 30 destination port 25
 
 # Rule 40: Web HTTP (TCP 80)
 set nat destination rule 40 description 'Scored: Web-HTTP'
-set nat destination rule 40 inbound-interface eth5
+set nat destination rule 40 inbound-interface eth3
 set nat destination rule 40 destination address '10.229.100.140'
 set nat destination rule 40 translation address '172.20.240.101'
 set nat destination rule 40 protocol tcp
@@ -58,7 +58,7 @@ set nat destination rule 40 destination port 80
 
 # Rule 45: Web HTTPS (TCP 443)
 set nat destination rule 45 description 'Scored: Web-HTTPS'
-set nat destination rule 45 inbound-interface eth5
+set nat destination rule 45 inbound-interface eth3
 set nat destination rule 45 destination address '10.229.100.140'
 set nat destination rule 45 translation address '172.20.240.101'
 set nat destination rule 45 protocol tcp
